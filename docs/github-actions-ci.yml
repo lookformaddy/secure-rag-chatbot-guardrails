@@ -1,0 +1,34 @@
+# GitHub Actions CI for secure-rag-chatbot-guardrails.
+# NOTE: this file lives under docs/ for reference. To activate it, move it to
+# .github/workflows/ci.yml in the repository.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: PYTHONPATH=src pytest -q
+      - name: Run security eval
+        run: PYTHONPATH=src python evals/run_eval.py
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t secure-rag .
